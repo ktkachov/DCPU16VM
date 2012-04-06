@@ -27,6 +27,22 @@ inline uint16_t toLiteral(uint16_t v) {
   return v - 0x20;
 }
 
+short sizeOfInstructionWords(uint16_t i) {
+  uint16_t op_code = i & 0xf;
+  uint16_t a = (i >> 4) & 0x3f;
+  uint16_t b = (i >> 10) & 0x3f;
+  if (op_code == 0) {
+    if (b == 0x1e || b == 0x1f) {
+      return 2;
+    }
+    return 1;
+  }
+  short s = 1;
+  s = (a == 0x1e || a == 0x1f) ? s+1 : s;
+  s = (b == 0x1e || b == 0x1f) ? s+1 : s;
+  return s;
+}
+
 uint16_t* getValueAddress(arch_t* a, uint16_t v) {
   if (v <= 0x07) {
     return &a->regs[v];
@@ -92,13 +108,15 @@ int main(int argc, char* argv[]) {
   uint8_t op_a    = 0;
   uint8_t op_b    = 0;
   
-  for (;;) {
+  while(arch->pc < RAM_SIZE-1) {
     uint16_t inst = arch->ram[arch->pc++];
     op_code = inst & 0xf;
     op_a    = (inst >> 4) & 0x3f;
     op_b    = (inst >> 10) & 0x3f;
 
-    printf("Executing instruction with opcode: %#x, a: %#x, b: %#x\n", op_code, op_a, op_b);
+    printf("exec ram[%#x]: %#x, a: %#x, b: %#x @ cycle %lu\n", arch->pc, op_code, op_a, op_b, arch->cycles);
+
+    printf("Reg[X] = %#x\n", arch->regs[3]);
 
     if (op_code == 0x0) {
       op_code = op_a;
@@ -121,7 +139,7 @@ int main(int argc, char* argv[]) {
     } else {
        uint16_t* a = getValueAddress(arch, op_a);
        uint16_t b = getValue(arch, op_b);
-       switch (op_a) {
+       switch (op_code) {
         case 0x1: /*SET*/
           if (!isLiteral(op_a)) {
             *a = b;
@@ -203,30 +221,30 @@ int main(int argc, char* argv[]) {
           }
           arch->cycles += 1;
           break;
-        case 0xc: ;
+        case 0xc:
           if (!(*a == b)) {
-            ++arch->pc;
+            arch->pc += sizeOfInstructionWords(arch->ram[arch->pc]);
             arch->cycles += 1;
           }
           arch->cycles += 2;
           break;
-        case 0xd: ;
+        case 0xd:
           if (!(*a != b)) {
-            ++arch->pc;
+            arch->pc += sizeOfInstructionWords(arch->ram[arch->pc]);
             arch->cycles += 1;
           }
           arch->cycles += 2;
           break;
-        case 0xe: ;
+        case 0xe:
           if (!(*a > b)) {
-            ++arch->pc;
+            arch->pc += sizeOfInstructionWords(arch->ram[arch->pc]);
             arch->cycles += 1;
           }
           arch->cycles += 2;
           break;
-        case 0xf: ;
+        case 0xf:
           if (!((*a & b) != 0)) {
-            ++arch->pc;
+            arch->pc += sizeOfInstructionWords(arch->ram[arch->pc]);
             arch->cycles += 1;
           }
           arch->cycles += 2;
