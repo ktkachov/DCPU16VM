@@ -27,6 +27,21 @@ inline uint16_t toLiteral(uint16_t v) {
   return v - 0x20;
 }
 
+void dumpRegs(arch_t* a) {
+  uint16_t* regs = a->regs;
+  printf("A = %#x\n", regs[0]);
+  printf("B = %#x\n", regs[1]);
+  printf("C = %#x\n", regs[2]);
+  printf("X = %#x\n", regs[3]);
+  printf("Y = %#x\n", regs[4]);
+  printf("Z = %#x\n", regs[5]);
+  printf("I = %#x\n", regs[6]);
+  printf("J = %#x\n", regs[7]);
+  printf("SP = %#x\n", a->sp);
+  printf("PC = %#x\n", a->pc);
+  printf("O = %#x\n", a->o);
+}
+
 short sizeOfInstructionWords(uint16_t i) {
   uint16_t op_code = i & 0xf;
   uint16_t a = (i >> 4) & 0x3f;
@@ -116,7 +131,7 @@ int main(int argc, char* argv[]) {
 
     printf("exec ram[%#x]: %#x, a: %#x, b: %#x @ cycle %lu\n", arch->pc, op_code, op_a, op_b, arch->cycles);
 
-    printf("Reg[X] = %#x\n", arch->regs[3]);
+    dumpRegs(arch);
 
     if (op_code == 0x0) {
       op_code = op_a;
@@ -252,5 +267,7 @@ int main(int argc, char* argv[]) {
       }
     }
   }
+  printf("Dumping registers\n");
+  dumpRegs(arch);
   return 0;
 }
