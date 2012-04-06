@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
   arch_t* arch = malloc(sizeof(*arch));
   arch->num_inst = 0;
   /*Read in program stored as hex integers in ascii format*/
-  while (scanf("%x ", &arch->ram[arch->num_inst++]) != EOF) {
+  while (scanf("%x", &arch->ram[arch->num_inst++]) != EOF) {
     if (arch->num_inst == RAM_SIZE-1) {
       printf("instructions cannot fit in RAM!\n");
       return 1;
